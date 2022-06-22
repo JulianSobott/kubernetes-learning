@@ -3,6 +3,7 @@
 
 ## Example Fast API app
 
+### Using cmd
 ```shell
 # WORKDIR kubernetes/example_app
 
@@ -22,4 +23,12 @@ kubectl get pods
 # expose service
 kubectl expose pod example-app --type=LoadBalancer --port=8080 --target-port=80
 kubectl get services
+```
+
+### Using deployment file
+
+```shell
+# WORKDIR kubernetes/example_app
+
+kubectl apply -f example-app-deployment.yaml
 ```
