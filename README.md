@@ -31,4 +31,7 @@ kubectl get services
 # WORKDIR kubernetes/example_app
 
 kubectl apply -f example-app-deployment.yaml
+
+# Deploy new image
+ kubectl rollout restart deployment/example-app-deployment
 ```
