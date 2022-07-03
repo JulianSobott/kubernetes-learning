@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-02-deployment
+  labels:
+    app: service-02
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-02
+  template:
+    metadata:
+      labels:
+        app: service-02
+    spec:
+      containers:
+        - name: service-02
+          image: firstcluster-registry:41703/service_02:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-02
+spec:
+  type: LoadBalancer
+  selector:
+    app: service-02
+  ports:
+    - port: 8080
+      targetPort: 80

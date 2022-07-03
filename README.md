@@ -33,5 +33,25 @@ kubectl get services
 kubectl apply -f example-app-deployment.yaml
 
 # Deploy new image
- kubectl rollout restart deployment/example-app-deployment
+kubectl rollout restart deployment/example-app-deployment
+```
+
+### Pod to pod communication
+
+```shell
+# WORKDIR kubernetes/example_multi_services
+
+# prepare docker images
+docker build service_01 -t firstcluster-registry:41703/service_01:latest
+docker build service_02 -t firstcluster-registry:41703/service_02:latest
+docker push firstcluster-registry:41703/service_01:lates
+docker push firstcluster-registry:41703/service_02:lates
+
+# start services
+kubectl apply -f service_01/service-01-deployment.yaml
+kubectl apply -f service_02/service-02-deployment.yaml
+
+# check if it is working
+
+curl http://$(kubectl get svc | grep service-02 | awk '{ print $4}'):8080
 ```
