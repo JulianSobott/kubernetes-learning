@@ -1,0 +1,11 @@
+POST http://127.0.0.1:8000/api/instance
+Content-Type: application/json
+
+{
+  "tenant_id": "1",
+  "name": "Test Server",
+  "slug": "test"
+}
+
+###
+GET http://127.0.0.1:8000
