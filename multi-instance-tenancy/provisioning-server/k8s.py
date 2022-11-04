@@ -1,10 +1,12 @@
 from kubernetes import client, config
 import kubernetes.client.rest
 
-from db import db_host
-from models import InstanceConfig, Database
+from db import db_host, db_database_name, db_user_name, db_password
+from models import Database, InstanceBaseConfig, InstanceSetupConfig
 
 CLUSTER_BASE_URL = "k8s.local"
+DB_CONNECTION_SECRET_NAME = "database-connection"
+CONFIG_MAP_NAME = "app-config"
 
 
 # Configs can be set in Configuration class directly or using helper utility
@@ -23,17 +25,49 @@ def deployment_name(tenant_id: str):
     return f"app-tenant-{tenant_id}"
 
 
-def deploy_instance(instance: InstanceConfig):
+def first_deployment(instance: InstanceSetupConfig):
     namespace = namespace_name(instance.tenant_id)
+
+    # create namespace
     body = client.V1Namespace()
     body.metadata = client.V1ObjectMeta(name=namespace)
-    try:
-        core_api.create_namespace(body)
-    except kubernetes.client.rest.ApiException as e:
-        if e.status == 409:
-            pass
-        else:
-            raise e
+    core_api.create_namespace(body)
+
+    # create secrets
+    database = instance.db.database
+    user = instance.db.user
+    password = instance.db.password
+    database_secret = client.V1Secret(
+        metadata=client.V1ObjectMeta(
+            name=DB_CONNECTION_SECRET_NAME,
+            namespace=namespace,
+        ),
+        string_data={
+            "host": db_host,
+            "database": database,
+            "user": user,
+            "password": password,
+        },
+    )
+    core_api.create_namespaced_secret(namespace, database_secret)
+
+    # create configmap
+    configmap = client.V1ConfigMap(
+        metadata=client.V1ObjectMeta(
+            name=CONFIG_MAP_NAME,
+            namespace=namespace,
+        ),
+        data={
+            "TENANT_NAME": instance.name,
+            "TENANT_SLUG": instance.slug,
+            "TENANT_ID": instance.tenant_id,
+        },
+    )
+    core_api.create_namespaced_config_map(namespace, configmap)
+
+
+def deploy_instance(instance: InstanceBaseConfig):
+    namespace = namespace_name(instance.tenant_id)
 
     deployment = client.V1Deployment(
         api_version="apps/v1",
@@ -55,29 +89,53 @@ def deploy_instance(instance: InstanceConfig):
                     containers=[
                         client.V1Container(
                             name=f"app-tenant-{instance.tenant_id}",
-                            image="local-registry:35543/example_app:latest",
-                            image_pull_policy="Always",
+                            image=f"local-registry:35543/example_app:{instance.version}",
                             ports=[client.V1ContainerPort(container_port=80)],
                             env=[
                                 client.V1EnvVar(
                                     name="TENANT",
-                                    value=instance.name,
+                                    value_from=client.V1EnvVarSource(
+                                        config_map_key_ref=client.V1ConfigMapKeySelector(
+                                            name=CONFIG_MAP_NAME,
+                                            key="TENANT_NAME",
+                                        ),
+                                    ),
                                 ),
                                 client.V1EnvVar(
                                     name="DB_USER",
-                                    value=instance.db.user,
+                                    value_from=client.V1EnvVarSource(
+                                        secret_key_ref=client.V1SecretKeySelector(
+                                            name=DB_CONNECTION_SECRET_NAME,
+                                            key="user",
+                                        ),
+                                    )
                                 ),
                                 client.V1EnvVar(
                                     name="DB_PASSWORD",
-                                    value=instance.db.password,
+                                    value_from=client.V1EnvVarSource(
+                                        secret_key_ref=client.V1SecretKeySelector(
+                                            name=DB_CONNECTION_SECRET_NAME,
+                                            key="password",
+                                        ),
+                                    )
                                 ),
                                 client.V1EnvVar(
                                     name="DB_HOST",
-                                    value=instance.db.host,
+                                    value_from=client.V1EnvVarSource(
+                                        secret_key_ref=client.V1SecretKeySelector(
+                                            name=DB_CONNECTION_SECRET_NAME,
+                                            key="host",
+                                        ),
+                                    )
                                 ),
                                 client.V1EnvVar(
                                     name="DB_DATABASE",
-                                    value=instance.db.database,
+                                    value_from=client.V1EnvVarSource(
+                                        secret_key_ref=client.V1SecretKeySelector(
+                                            name=DB_CONNECTION_SECRET_NAME,
+                                            key="database",
+                                        ),
+                                    )
                                 ),
                             ],
                         )
@@ -131,7 +189,11 @@ def deploy_instance(instance: InstanceConfig):
         else:
             raise
 
-    instance_url = f"{instance.slug}.{CLUSTER_BASE_URL}"
+    slug = core_api.read_namespaced_config_map(
+        name=CONFIG_MAP_NAME,
+        namespace=namespace,
+    ).data["TENANT_SLUG"]
+    instance_url = f"{slug}.{CLUSTER_BASE_URL}"
     ingress = client.V1Ingress(
         api_version="networking.k8s.io/v1",
         kind="Ingress",
@@ -195,17 +257,3 @@ def delete_instance(tenant_id: str):
         namespace=namespace,
     )
     core_api.delete_namespace(name=namespace)
-
-
-if __name__ == '__main__':
-    deploy_instance(InstanceConfig(
-        tenant_id="1",
-        name="Test",
-        slug="test",
-        db=Database(
-            user="test",
-            password="test",
-            host=db_host,
-            database="test",
-        ),
-    ))

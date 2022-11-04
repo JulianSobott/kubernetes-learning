@@ -1,18 +1,19 @@
 import logging
 import os
+import uuid
 
 import mariadb
 
-from models import InstanceConfig, Database
+from models import Database, InstanceSetupConfig
 
-db_password = os.environ.get("DB_PASSWORD", "default")
+db_root_password = os.environ.get("DB_PASSWORD", "default")
 db_host = os.environ.get("DB_HOST")
 
 
-def create_database(conf: InstanceConfig):
+def create_database(conf: InstanceSetupConfig):
     with mariadb.connect(
             user="root",
-            password=os.environ.get("DB_PASSWORD", "default"),
+            password=db_root_password,
             host=db_host,
             port=3306,
     ) as conn:
@@ -37,7 +38,7 @@ def delete_database(database: str, user: str):
     with mariadb.connect(
         host=db_host,
         user="root",
-        password=db_password,
+        password=db_root_password,
     ) as connection:
         try:
             with connection.cursor() as cursor:
@@ -46,6 +47,18 @@ def delete_database(database: str, user: str):
                 cursor.execute("FLUSH PRIVILEGES;")
         except Exception as e:
             return e
+
+
+def db_database_name(tenant_id: str):
+    return f"example_app_{tenant_id}"
+
+
+def db_user_name(tenant_id: str):
+    return f"tenant_{tenant_id}"
+
+
+def db_password(tenant_id: str):
+    return uuid.uuid4().hex
 
 
 if __name__ == '__main__':

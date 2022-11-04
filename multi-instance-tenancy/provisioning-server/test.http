@@ -4,7 +4,8 @@ Content-Type: application/json
 {
   "tenant_id": "1",
   "name": "Test Server",
-  "slug": "test"
+  "slug": "test",
+  "version": "0.1"
 }
 
 ###
@@ -12,3 +13,12 @@ GET http://127.0.0.1:8000
 
 ###
 DELETE http://127.0.0.1:8000/api/instance/1
+
+### Update
+PUT http://127.0.0.1:8000/api/instance/1
+Content-Type: application/json
+
+{
+  "tenant_id": "1",
+  "version": "0.2"
+}

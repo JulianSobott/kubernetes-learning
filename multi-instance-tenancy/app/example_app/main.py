@@ -26,7 +26,7 @@ async def root():
     ) as connection:
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
+                cursor.execute("SELECT 3")
                 result = cursor.fetchone()
                 logger.info(f"Result: {result}")
         except Error as e:
