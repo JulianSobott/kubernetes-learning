@@ -8,6 +8,7 @@ authors = ["JulianSobott <julian.sobott@gmail.com>"]
 python = "^3.10"
 fastapi = "^0.78.0"
 uvicorn = "^0.17.6"
+mysql-connector-python = "^8.0.31"
 
 [tool.poetry.dev-dependencies]
 

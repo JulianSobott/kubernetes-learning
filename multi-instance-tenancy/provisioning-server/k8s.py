@@ -1,7 +1,8 @@
 from kubernetes import client, config
 import kubernetes.client.rest
 
-from models import InstanceConfig
+from db import db_host
+from models import InstanceConfig, Database
 
 CLUSTER_BASE_URL = "k8s.local"
 
@@ -42,7 +43,7 @@ def deploy_instance(instance: InstanceConfig):
             labels={"app": f"tenant-{instance.tenant_id}"},
         ),
         spec=client.V1DeploymentSpec(
-            replicas=2,
+            replicas=1,
             selector=client.V1LabelSelector(
                 match_labels={"app": f"tenant-{instance.tenant_id}"},
             ),
@@ -61,6 +62,22 @@ def deploy_instance(instance: InstanceConfig):
                                 client.V1EnvVar(
                                     name="TENANT",
                                     value=instance.name,
+                                ),
+                                client.V1EnvVar(
+                                    name="DB_USER",
+                                    value=instance.db.user,
+                                ),
+                                client.V1EnvVar(
+                                    name="DB_PASSWORD",
+                                    value=instance.db.password,
+                                ),
+                                client.V1EnvVar(
+                                    name="DB_HOST",
+                                    value=instance.db.host,
+                                ),
+                                client.V1EnvVar(
+                                    name="DB_DATABASE",
+                                    value=instance.db.database,
                                 ),
                             ],
                         )
@@ -185,4 +202,10 @@ if __name__ == '__main__':
         tenant_id="1",
         name="Test",
         slug="test",
+        db=Database(
+            user="test",
+            password="test",
+            host=db_host,
+            database="test",
+        ),
     ))

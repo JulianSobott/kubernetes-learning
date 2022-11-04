@@ -138,6 +138,14 @@ websocket-client = ">=0.32.0,<0.40.0 || >0.40.0,<0.41.0 || >=0.43.0"
 adal = ["adal (>=1.0.2)"]
 
 [[package]]
+name = "mariadb"
+version = "1.1.4"
+description = "Python MariaDB extension"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "oauthlib"
 version = "3.2.2"
 description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
@@ -329,7 +337,7 @@ test = ["websockets"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "8f54e40fe33bf4279efb7807d45a65f8e259af9ee5594c0dec2fd8f0416ecc7b"
+content-hash = "ed1d29419028516b0a54475775e34e4825e8e2d2eddc4ef6c03840a72fbad303"
 
 [metadata.files]
 anyio = []
@@ -346,6 +354,7 @@ google-auth = []
 h11 = []
 idna = []
 kubernetes = []
+mariadb = []
 oauthlib = []
 pyasn1 = []
 pyasn1-modules = []

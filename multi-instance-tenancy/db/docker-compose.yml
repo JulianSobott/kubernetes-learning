@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mariadb:10.9
+    ports:
+      - "3306:3306"
+    environment:
+       MARIADB_ROOT_PASSWORD: 7G4rF9dBVtk9yLWwAnXoPPGkPAvxtTcx
